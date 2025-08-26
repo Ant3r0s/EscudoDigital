@@ -15,26 +15,26 @@
 </head>
 <body>
     <canvas id="matrix-background"></canvas>
-
     <div class="container">
         <div class="glass-card">
             <header class="terminal-header">
-                <p>ESCUDO DIGITAL v1.1 [NEURAL KERNEL: ONLINE]</p>
+                <h1 class="glitch" data-text="ESCUDO DIGITAL">ESCUDO DIGITAL</h1>
+                <p class="subtitle">// CLIENT-SIDE NEURAL KERNEL: ONLINE //</p>
             </header>
             
             <div class="content">
-                <p>> Inserte flujo de datos para análisis de amenaza:</p>
-                <textarea id="input-text" class="input-textarea" placeholder="> Pegue aquí el texto sospechoso..."></textarea>
+                <p>> Insert data stream for threat analysis:</p>
+                <textarea id="input-text" class="input-textarea" placeholder="> Paste suspicious text here..."></textarea>
                 
-                <button id="analyze-btn" class="analyze-button">[ ANALIZAR AMENAZA ]</button>
+                <button id="analyze-btn" class="analyze-button">[ ANALYZE THREAT ]</button>
                 
                 <div id="results-container" class="results-container hidden">
-                    <p>> Análisis de Intención:</p>
+                    <p>> Intent Analysis:</p>
                     <div id="verdict-box" class="verdict-box">
                         <p id="verdict-text"></p>
                     </div>
 
-                    <p>> Payloads Extraídos (NER):</p>
+                    <p>> Extracted Payloads (NER):</p>
                     <div id="ner-box" class="ner-box">
                         <p id="ner-text"></p>
                     </div>
