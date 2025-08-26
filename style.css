@@ -157,3 +157,27 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
     .input-textarea { height: 120px; }
     .main-controls { flex-direction: column; }
 }
+/* --- AÑADIR ESTO AL FINAL DEL CSS --- */
+.utility-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.action-button.utility {
+    flex-grow: 1;
+    padding: 0.5rem;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--card-border);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-button.utility:hover:not(:disabled) {
+    background-color: var(--card-border);
+    color: var(--accent-white);
+}
