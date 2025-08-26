@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         status.textContent = '> STATUS: KERNEL ONLINE. AWAITING INPUT.';
         analyzeBtn.disabled = false;
-        analyzeBtn.textContent = '[ ANALIZAR AMENAZA ]';
+        analyzeBtn.textContent = '[ ANALYZE THREAT ]';
     }
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = '[ KERNEL OFFLINE... ]';
@@ -144,8 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function matrix() {
         ctx.fillStyle = 'rgba(0,0,0,.05)';
         ctx.fillRect(0, 0, w, h);
-
-        ctx.fillStyle = var(--accent-cyan);
+        
+        // **CAMBIO DE COLOR A BLANCO/GRIS**
+        ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';
         ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;
 
         ypos.forEach((y, ind) => {
