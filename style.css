@@ -3,58 +3,30 @@
     --font-family: 'Roboto Mono', monospace;
     --accent-white: #f0f0f0;
     --text-color: #cccccc;
-
-    --card-bg: rgba(20, 20, 30, 0.6);
+    --card-bg: rgba(20, 20, 30, 0.5);
     --card-shadow: rgba(255, 255, 255, 0.2);
     --card-border: rgba(255, 255, 255, 0.3);
-
     --color-red: #ff4d4d;
     --color-orange: #ff9d00;
     --color-green: #39ff14;
 }
-
 * { box-sizing: border-box; }
-
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: var(--font-family);
-    font-size: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 1rem;
-    overflow-x: hidden;
+    background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-family);
+    font-size: 16px; display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; margin: 0; padding: 1rem; overflow-x: hidden;
 }
-
-#matrix-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-}
-
+#matrix-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 .container { width: 100%; max-width: 800px; }
-
 .glass-card {
-    background: var(--card-bg);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 10px;
-    border: 1px solid var(--card-border);
-    padding: 1.5rem;
+    background: var(--card-bg); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: 10px; border: 1px solid var(--card-border); padding: 1.5rem;
 }
-
 .terminal-header { text-align: center; margin-bottom: 1rem; }
 h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; margin: 0; }
 .subtitle { color: var(--accent-white); opacity: 0.8; }
 .content > p { margin: 1rem 0 0.5rem 0; }
-
 .glitch::before, .glitch::after {
     content: attr(data-text); position: absolute; top: 0; left: 0;
     width: 100%; height: 100%; background: transparent; overflow: hidden;
@@ -63,7 +35,6 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
 .glitch::after { left: -2px; text-shadow: -2px 0 var(--color-green); animation: glitch-anim-2 2s infinite linear reverse; }
 @keyframes glitch-anim-1 { 0%, 12%, 18%, 22%, 100% { clip-path: inset(40% 0 60% 0); } 14%, 20% { clip-path: inset(10% 0 85% 0); } }
 @keyframes glitch-anim-2 { 0%, 11%, 17%, 21%, 100% { clip-path: inset(60% 0 40% 0); } 13%, 19% { clip-path: inset(80% 0 5% 0); } }
-
 .input-textarea {
     width: 100%; height: 150px; background-color: rgba(0,0,0,0.3);
     color: var(--text-color); border: 1px solid var(--card-border);
@@ -71,20 +42,18 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
     padding: 10px; border-radius: 5px;
 }
 .input-textarea:focus { outline: none; border-color: var(--accent-white); box-shadow: 0 0 10px var(--card-shadow); }
-
-.utility-controls { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.utility-controls { display: flex; gap: 1rem; margin-top: 1rem; margin-bottom: 1rem; }
 .action-button.utility {
     flex-grow: 1; padding: 0.5rem; font-size: 14px; font-weight: bold;
     background-color: transparent; color: var(--text-color); border: 1px solid var(--card-border);
     border-radius: 5px; cursor: pointer; transition: all 0.2s ease;
 }
 .action-button.utility:hover:not(:disabled) { background-color: var(--card-border); color: var(--accent-white); }
-
 .main-controls { display: flex; gap: 1rem; }
 .analyze-button {
-    flex-grow: 1; padding: 1rem; font-family: var(--font-family);
-    font-size: 18px; font-weight: bold; background-color: var(--accent-white);
-    color: #000; border: none; border-radius: 5px; cursor: pointer; transition: all 0.2s ease;
+    flex-grow: 1; padding: 1rem; font-family: var(--font-family); font-size: 18px; font-weight: bold;
+    background-color: var(--accent-white); color: #000; border: none; border-radius: 5px;
+    cursor: pointer; transition: all 0.2s ease;
 }
 .analyze-button:hover:not(:disabled) { background-color: var(--bg-color); color: var(--accent-white); box-shadow: 0 0 15px var(--accent-white); }
 .analyze-button:disabled { background-color: #555; color: #999; cursor: not-allowed; }
@@ -94,10 +63,8 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
     border-radius: 5px; cursor: pointer; transition: all 0.2s ease;
 }
 .action-button.secondary:hover:not(:disabled) { background-color: var(--accent-white); color: #000; }
-
 .hidden { display: none !important; }
 .results-container { margin-top: 1rem; }
-
 .verdict-box, .ner-box, .advice-box {
     border: 1px solid var(--card-border); padding: 1rem; margin-bottom: 1rem;
     min-height: 50px; background-color: rgba(0,0,0,0.2); border-radius: 5px; word-wrap: break-word;
@@ -106,18 +73,15 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
 .advice-box h3 { margin-top: 0; color: var(--color-orange); }
 .advice-box ul { list-style-type: '>> '; padding-left: 20px; margin: 0; }
 .advice-box ul li { margin-bottom: 0.5rem; }
-
 .verdict-box.alert-red { border-color: var(--color-red); box-shadow: 0 0 10px var(--color-red); }
 .verdict-box.alert-orange { border-color: var(--color-orange); box-shadow: 0 0 10px var(--color-orange); }
 .verdict-box.alert-green { border-color: var(--color-green); box-shadow: 0 0 10px var(--color-green); }
 #verdict-text { color: #fff; }
-
 .ner-text-highlight {
     padding: 2px 4px; background-color: var(--accent-white); color: #000;
     cursor: pointer; border-radius: 3px; font-weight: bold;
 }
 .ner-text-highlight:hover { background-color: var(--color-orange); }
-
 .status-bar { border-top: 1px solid var(--card-border); margin-top: 1rem; padding-top: 0.5rem; font-size: 0.9rem; color: #aaa; }
 .modal {
     position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
