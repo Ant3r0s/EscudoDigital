@@ -13,9 +13,7 @@
     --color-green: #39ff14;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     background-color: var(--bg-color);
@@ -40,10 +38,7 @@ body {
     z-index: -1;
 }
 
-.container {
-    width: 100%;
-    max-width: 800px;
-}
+.container { width: 100%; max-width: 800px; }
 
 .glass-card {
     background: var(--card-bg);
@@ -77,8 +72,15 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
 }
 .input-textarea:focus { outline: none; border-color: var(--accent-white); box-shadow: 0 0 10px var(--card-shadow); }
 
-.main-controls { display: flex; gap: 1rem; margin: 1rem 0; }
+.utility-controls { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.action-button.utility {
+    flex-grow: 1; padding: 0.5rem; font-size: 14px; font-weight: bold;
+    background-color: transparent; color: var(--text-color); border: 1px solid var(--card-border);
+    border-radius: 5px; cursor: pointer; transition: all 0.2s ease;
+}
+.action-button.utility:hover:not(:disabled) { background-color: var(--card-border); color: var(--accent-white); }
 
+.main-controls { display: flex; gap: 1rem; }
 .analyze-button {
     flex-grow: 1; padding: 1rem; font-family: var(--font-family);
     font-size: 18px; font-weight: bold; background-color: var(--accent-white);
@@ -86,7 +88,6 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
 }
 .analyze-button:hover:not(:disabled) { background-color: var(--bg-color); color: var(--accent-white); box-shadow: 0 0 15px var(--accent-white); }
 .analyze-button:disabled { background-color: #555; color: #999; cursor: not-allowed; }
-
 .action-button.secondary {
     padding: 1rem; font-family: var(--font-family); font-size: 18px; font-weight: bold;
     background-color: transparent; color: var(--accent-white); border: 1px solid var(--accent-white);
@@ -156,28 +157,4 @@ h1.glitch { color: var(--accent-white); font-size: 2.8rem; position: relative; m
     h1.glitch { font-size: 2rem; }
     .input-textarea { height: 120px; }
     .main-controls { flex-direction: column; }
-}
-/* --- AÑADIR ESTO AL FINAL DEL CSS --- */
-.utility-controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.action-button.utility {
-    flex-grow: 1;
-    padding: 0.5rem;
-    font-size: 14px;
-    font-weight: bold;
-    background-color: transparent;
-    color: var(--text-color);
-    border: 1px solid var(--card-border);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.action-button.utility:hover:not(:disabled) {
-    background-color: var(--card-border);
-    color: var(--accent-white);
 }
