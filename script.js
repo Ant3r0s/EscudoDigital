@@ -49,14 +49,24 @@ document.addEventListener('DOMContentLoaded', () => {
         'spam': ['No respondas al mensaje.','Marca el mensaje como Correo no deseado o Spam en tu gestor de correo.','No hagas clic en ningún enlace ni descargues archivos adjuntos.']
     };
     const threatKeywords = {
-        'urgente': 15, 'inmediato': 15, 'inmediata': 15, 'ahora mismo': 15, 'última oportunidad': 15, 'dispone de 24 horas': 15, '12 horas': 15, 'tiempo limitado': 10,
+        // Urgencia y escasez
+        'urgente': 15, 'inmediato': 15, 'inmediata': 15, 'ahora mismo': 15, 'última oportunidad': 15, 'dispone de 24 horas': 15, '48 horas': 15, 'tiempo limitado': 10,
+        // Bancos y pagos
         'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'iban': 20, 'tarjeta de crédito': 15, 'pago': 10,
-        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
+        // Credenciales y seguridad
+        'contraseña': 25, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
+        // Aislamiento y autoridad
         'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, 'directora financiera': 10,
+        // Premios y ofertas
         'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20, 'oferta de trabajo': 10,
+        // Enlaces y acciones
         'haga clic': 10, 'en el siguiente enlace': 10,
+        // Paquetería
         'paquete': 15, 'entrega': 15, 'envío': 15, 'tasas de aduana': 25, 'no ha podido ser entregado': 20,
-        'soporte técnico': 25, 'virus detectado': 30, 'troyano': 30, 'software espía': 30, 'licencia ha sido suspendida': 25, 'llame inmediatamente': 20, 'microsoft': 10, 'windows': 10
+        // Soporte Técnico
+        'soporte técnico': 25, 'virus detectado': 30, 'troyano': 30, 'software espía': 30, 'licencia ha sido suspendida': 25, 'llame inmediatamente': 20, 'microsoft': 10, 'windows': 10,
+        // **NUEVO: Sextorsión y Cripto**
+        'bitcoin': 30, 'btc': 30, 'crypto': 25, 'monedero': 25, 'webcam': 30, 'video sexual': 35, 'grabado': 25, 'humillación': 20, 'secreto': 20, 'malware': 20
     };
 
     // --- Inicialización del Kernel de IA ---
