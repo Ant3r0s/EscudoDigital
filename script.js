@@ -24,14 +24,23 @@ document.addEventListener('DOMContentLoaded', () => {
         'legítimo': 'El texto no presenta indicadores claros de amenaza y parece ser genuino.',
     };
 
+    // **NUEVO: MOTOR DE REGLAS / HEURÍSTICO (LA "EXPERIENCIA")**
+    const threatKeywords = {
+        'URGENTE': 15, 'inmediato': 15, 'ahora mismo': 15, 'última oportunidad': 15, '12 horas': 10, '24 horas': 10,
+        'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'IBAN': 20,
+        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 15,
+        'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, // Tácticas de aislamiento
+        'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20,
+        'haga clic aquí': 10, 'enlace seguro': 10,
+        'factura pendiente': 10, 'pago': 10,
+    };
+
     // --- Inicialización del Kernel de IA ---
     async function initializeKernel() {
         status.textContent = '> STATUS: LOADING NEURAL CLASSIFIER...';
         classifier = await window.pipeline('zero-shot-classification', 'Xenova/bart-large-mnli');
-        
         status.textContent = '> STATUS: LOADING NER PAYLOAD EXTRACTOR...';
         ner = await window.pipeline('token-classification', 'Xenova/bert-base-multilingual-cased-ner-hrl');
-
         status.textContent = '> STATUS: KERNEL ONLINE. AWAITING INPUT.';
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = '[ ANALYZE THREAT ]';
@@ -44,19 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
     analyzeBtn.addEventListener('click', async () => {
         const textToAnalyze = inputText.value;
         if (textToAnalyze.trim().length < 20) {
-            status.textContent = '> ERROR: INPUT STREAM TOO SHORT. MINIMUM 20 CHARACTERS.';
-            return;
+            status.textContent = '> ERROR: INPUT STREAM TOO SHORT.'; return;
         }
-
         analyzeBtn.disabled = true;
         status.textContent = '> EXECUTING THREAT ANALYSIS... PLEASE WAIT.';
         resultsContainer.classList.remove('hidden');
-
         try {
             const classificationResult = await classifier(textToAnalyze, threatLabels);
-            renderVerdict(classificationResult);
-
             const nerResult = await ner(textToAnalyze, {group_entities: true});
+            
+            // **MOTOR HÍBRIDO EN ACCIÓN**
+            renderVerdict(classificationResult, textToAnalyze);
             renderNer(textToAnalyze, nerResult);
 
             status.textContent = '> ANALYSIS COMPLETE. STANDING BY.';
@@ -68,37 +75,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Renderizado de Salida ---
-    function renderVerdict(result) {
-        // 1. Encontrar la puntuación más alta en el array de 'scores'.
-        const maxScore = Math.max(...result.scores);
-        // 2. Encontrar el índice (la posición) de esa puntuación.
-        const maxIndex = result.scores.indexOf(maxScore);
-        // 3. Usar ese índice para obtener la etiqueta y la puntuación correctas.
-        const bestLabel = result.labels[maxIndex];
-        const bestScore = result.scores[maxIndex];
+    // --- NUEVA FUNCIÓN para el motor de reglas ---
+    function calculateHeuristicScore(text) {
+        let score = 0;
+        const lowerCaseText = text.toLowerCase();
+        for (const keyword in threatKeywords) {
+            if (lowerCaseText.includes(keyword.toLowerCase())) {
+                score += threatKeywords[keyword];
+            }
+        }
+        return score;
+    }
 
-        const scorePercent = (bestScore * 100).toFixed(1);
+    // --- Renderizado de Salida (MODIFICADO PARA EL MOTOR HÍBRIDO) ---
+    function renderVerdict(aiResult, originalText) {
+        // 1. Obtenemos el "instinto" de la IA
+        const maxScore = Math.max(...aiResult.scores);
+        const maxIndex = aiResult.scores.indexOf(maxScore);
+        const bestLabel = aiResult.labels[maxIndex];
+        const bestScore = aiResult.scores[maxIndex];
+
+        // 2. Obtenemos la "experiencia" del motor de reglas
+        const heuristicScore = calculateHeuristicScore(originalText);
+
+        // 3. Combinamos ambos para el veredicto final
+        let finalVerdictLabel = bestLabel;
+        // Si el motor de reglas encuentra muchas amenazas, su opinión tiene más peso.
+        if (heuristicScore > 30 && bestLabel === 'legítimo') {
+             finalVerdictLabel = 'estafa'; // Corregimos a la IA
+        }
+        // Si la IA duda pero las reglas ven algo, subimos la alerta.
+        if (heuristicScore > 15 && bestLabel === 'legítimo' && bestScore < 0.8) {
+             finalVerdictLabel = 'phishing';
+        }
+
+        const finalScorePercent = (bestScore * 100).toFixed(1);
+        const explanation = threatExplanations[finalVerdictLabel];
         let verdictClass, verdictTitle;
 
-        if (bestLabel === 'legítimo' && bestScore > 0.6) {
-            verdictClass = 'alert-green';
-            verdictTitle = `[LEGÍTIMO (${scorePercent}%)]`;
-        } else if (bestLabel === 'legítimo') {
+        if (heuristicScore >= 35) {
+             verdictClass = 'alert-red';
+             verdictTitle = `[ALERTA MÁXIMA: ${finalVerdictLabel.toUpperCase()} (Heurística: ${heuristicScore}pts)]`;
+        } else if (finalVerdictLabel !== 'legítimo') {
              verdictClass = 'alert-orange';
-             verdictTitle = `[SOSPECHOSO - BAJA CONFIANZA (${scorePercent}%)]`;
-        } else if (bestScore < 0.5) {
-            verdictClass = 'alert-orange';
-            verdictTitle = `[AMENAZA INDETERMINADA, POSIBLE ${bestLabel.toUpperCase()} (${scorePercent}%)]`;
+             verdictTitle = `[SOSPECHOSO: ${finalVerdictLabel.toUpperCase()} (${finalScorePercent}%)]`;
         } else {
-            verdictClass = 'alert-red';
-            verdictTitle = `[ALERTA: ${bestLabel.toUpperCase()} (${scorePercent}%)]`;
+             verdictClass = 'alert-green';
+             verdictTitle = `[LEGÍTIMO (${finalScorePercent}%)]`;
         }
         
-        verdictBox.className = 'verdict-box'; // Reset
+        verdictBox.className = 'verdict-box';
         verdictBox.classList.add(verdictClass);
-        
-        const explanation = threatExplanations[bestLabel];
         typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);
     }
 
@@ -115,52 +142,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function typewriterEffect(element, text) {
-        element.innerHTML = "";
-        let i = 0;
-        const speed = 10;
-        function type() {
-            if (i < text.length) {
-                element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
-                i++;
-                setTimeout(type, speed);
-            }
-        }
+        element.innerHTML = ""; let i = 0; const speed = 10;
+        function type() { if (i < text.length) { element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i); i++; setTimeout(type, speed); } }
         type();
     }
 
     // --- LÓGICA PARA EL FONDO DE MATRIX ---
     const canvas = document.getElementById('matrix-background');
     const ctx = canvas.getContext('2d');
-
     let w = canvas.width = window.innerWidth;
     let h = canvas.height = window.innerHeight;
     let cols = Math.floor(w / 20) + 1;
     let ypos = Array(cols).fill(0);
-
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
-
     function matrix() {
         ctx.fillStyle = 'rgba(0,0,0,.05)';
         ctx.fillRect(0, 0, w, h);
-        
         ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';
         ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;
-
         ypos.forEach((y, ind) => {
             const text = String.fromCharCode(Math.random() * 128);
             const x = ind * 20;
             ctx.fillText(text, x, y);
-            if (y > 100 + Math.random() * 10000) {
-                ypos[ind] = 0;
-            } else {
-                ypos[ind] = y + 20;
-            }
+            if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+            else ypos[ind] = y + 20;
         });
     }
-    
     setInterval(matrix, 50);
-
     window.addEventListener('resize', () => {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
