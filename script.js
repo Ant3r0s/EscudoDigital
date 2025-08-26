@@ -1,5 +1,6 @@
-// La importación y configuración de la IA se hace aquí, al principio de todo.
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+
+// Forzamos a la IA a buscar los modelos en el sitio correcto, SIEMPRE.
 env.allowLocalModels = false;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,33 +40,24 @@ document.addEventListener('DOMContentLoaded', () => {
         'legítimo': 'El texto no presenta indicadores claros de amenaza y parece ser genuino.',
     };
     const threatAdvice = {
-        'phishing': ['NUNCA hagas clic en enlaces de correos o SMS de este tipo.','Verifica la dirección del remitente. A menudo contiene errores sutiles.','Accede siempre a tu cuenta escribiendo la URL oficial en el navegador, no desde el enlace.','Ninguna entidad seria te pedirá tu contraseña o datos completos por correo.'],
+        'phishing': ['NUNCA hagas clic en enlaces de correos o SMS de este tipo.','Verifica la dirección del remitente. A menudo contiene errores sutiles.','Accede siempre a tu cuenta escribiendo la URL oficial en el navegador, no desde el enlace.'],
         'estafa de soporte técnico': ['Cuelga el teléfono o cierra el chat. Microsoft/Apple NUNCA te contactarán de esta forma.','No instales ningún software que te pidan (AnyDesk, TeamViewer).','Nunca les des el control de tu ordenador.'],
-        'oferta engañosa': ['Desconfía de ofertas que no has solicitado y que prometen mucho por poco esfuerzo.','Nunca pagues por adelantado para un trabajo o para recibir un premio.','Investiga a la empresa o persona que te contacta. Busca opiniones en Google.'],
+        'oferta engañosa': ['Desconfía de ofertas que no has solicitado y que prometen mucho por poco esfuerzo.','Nunca pagues por adelantado para un trabajo o para recibir un premio.','Investiga a la empresa o persona que te contacta.'],
         'sextorsión': ['NO PAGUES. Pagar no garantiza que borren nada y te pedirán más dinero.','Denuncia el caso a la policía y guarda todas las pruebas.','Bloquea al remitente y no respondas a sus mensajes.'],
-        'notificación de entrega falsa': ['No pagues ninguna tasa aduanera desde un enlace de SMS/email.','Copia el número de seguimiento y búscalo en la web OFICIAL de la empresa de paquetería.','Elimina el mensaje. Es un intento de robar los datos de tu tarjeta.'],
-        'estafa': ['Si suena demasiado bueno para ser verdad, casi seguro que no lo es.','Nunca envíes dinero a alguien que no conoces en persona.','No compartas información personal o financiera con desconocidos que te contactan de la nada.'],
-        'falsa urgencia': ['Tómate un respiro. Las estafas buscan que actúes con pánico y sin pensar.','Contacta con la supuesta entidad (tu banco, tu jefe) a través de un canal oficial que tú conozcas, no el que te proporcionan en el mensaje.'],
-        'spam': ['No respondas al mensaje.','Marca el mensaje como Correo no deseado o Spam en tu gestor de correo.','No hagas clic en ningún enlace ni descargues archivos adjuntos.']
+        'notificación de entrega falsa': ['No pagues ninguna tasa aduanera desde un enlace de SMS/email.','Copia el número de seguimiento y búscalo en la web OFICIAL de la empresa de paquetería.','Elimina el mensaje.'],
+        'estafa': ['Si suena demasiado bueno para ser verdad, casi seguro que no lo es.','Nunca envíes dinero a alguien que no conoces en persona.','No compartas información personal o financiera con desconocidos.'],
+        'falsa urgencia': ['Tómate un respiro. Las estafas buscan que actúes con pánico.','Contacta con la supuesta entidad a través de un canal oficial que tú conozcas.','Cuestiona por qué necesitan que actúes AHORA MISMO.'],
+        'spam': ['No respondas al mensaje.','Marca el mensaje como Correo no deseado o Spam.','No hagas clic en ningún enlace.']
     };
     const threatKeywords = {
-        // Urgencia y escasez
         'urgente': 15, 'inmediato': 15, 'inmediata': 15, 'ahora mismo': 15, 'última oportunidad': 15, 'dispone de 24 horas': 15, '48 horas': 15, 'tiempo limitado': 10,
-        // Bancos y pagos
         'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'iban': 20, 'tarjeta de crédito': 15, 'pago': 10,
-        // Credenciales y seguridad
-        'contraseña': 25, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
-        // Aislamiento y autoridad
+        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
         'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, 'directora financiera': 10,
-        // Premios y ofertas
         'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20, 'oferta de trabajo': 10,
-        // Enlaces y acciones
         'haga clic': 10, 'en el siguiente enlace': 10,
-        // Paquetería
         'paquete': 15, 'entrega': 15, 'envío': 15, 'tasas de aduana': 25, 'no ha podido ser entregado': 20,
-        // Soporte Técnico
         'soporte técnico': 25, 'virus detectado': 30, 'troyano': 30, 'software espía': 30, 'licencia ha sido suspendida': 25, 'llame inmediatamente': 20, 'microsoft': 10, 'windows': 10,
-        // **NUEVO: Sextorsión y Cripto**
         'bitcoin': 30, 'btc': 30, 'crypto': 25, 'monedero': 25, 'webcam': 30, 'video sexual': 35, 'grabado': 25, 'humillación': 20, 'secreto': 20, 'malware': 20
     };
 
@@ -111,9 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let score = 0;
         const lowerCaseText = text.toLowerCase();
         for (const keyword in threatKeywords) {
-            if (lowerCaseText.includes(keyword.toLowerCase())) {
-                score += threatKeywords[keyword];
-            }
+            if (lowerCaseText.includes(keyword.toLowerCase())) { score += threatKeywords[keyword]; }
         }
         return score;
     }
@@ -124,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxIndex = aiResult.scores.indexOf(maxScore);
         let bestLabel = aiResult.labels[maxIndex];
         const bestScore = aiResult.scores[maxIndex];
-
         if (heuristicScore > 20 && bestLabel === 'legítimo') {
             const possibleScams = ['phishing', 'notificación de entrega falsa', 'estafa', 'estafa de soporte técnico'];
             const scamScores = aiResult.labels.map((label, index) => ({label, score: aiResult.scores[index]})).filter(item => possibleScams.includes(item.label));
@@ -132,11 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 bestLabel = scamScores.reduce((prev, current) => (prev.score > current.score) ? prev : current).label;
             }
         }
-
         const scorePercent = (bestScore * 100).toFixed(1);
         const explanation = threatExplanations[bestLabel];
         let verdictClass, verdictTitle;
-
         if (heuristicScore >= 40 || (bestLabel !== 'legítimo' && bestScore > 0.7)) {
              verdictClass = 'alert-red';
              verdictTitle = `[ALERTA MÁXIMA: ${bestLabel.toUpperCase()} (Riesgo Heurístico: ${heuristicScore}pts)]`;
@@ -147,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
              verdictClass = 'alert-green';
              verdictTitle = `[LEGÍTIMO (Confianza IA: ${scorePercent}%)]`;
         }
-        
         verdictBox.className = 'verdict-box';
         verdictBox.classList.add(verdictClass);
         typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);
@@ -190,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         type();
     }
 
+    // --- Lógica del Historial ---
     function saveToHistory(text, verdict, label) {
         const history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];
         const newEntry = { id: Date.now(), date: new Date().toLocaleString('es-ES'), text: text, verdict: verdict, label: label };
@@ -229,9 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Lógica de la Ventana Modal y Utilidades ---
     historyBtn.addEventListener('click', () => { loadHistory(); historyModal.classList.remove('hidden'); });
     closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
     window.addEventListener('click', (event) => { if (event.target === historyModal) { historyModal.classList.add('hidden'); } });
+    
     copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(inputText.value).then(() => {
             status.textContent = '> INPUT STREAM COPIED TO CLIPBOARD.';
