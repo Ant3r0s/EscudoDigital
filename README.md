@@ -1,29 +1,52 @@
-______  _____  _   _  _____  ____   _      ____    ____  _   _  _____  ____    _    _   _
- |  ____|| ____|| | | || ____||  _ \ | |    / __ \  / __ \| | | || ____||  _ \  | |  | | | |
- | |__   | |__  | | | || |__  | | | || |   | |  | || |  | | | | || |__  | | | |_| |  | | | |
- |  __|  | __|  | | | || __|  | | | || |   | |  | || |  | | | | || __|  | | | | | |  | | | |
- | |     | |____| |_| || |____| |_| || |____| |__| || |__| | |_| || |____| |_| |_| |__| |_|
- |_|     |______|\___/ |______||____/ |______|\____/  \____/ \___/ |______||____/(_)(_)|___|
+# 🛡️ Escudo Digital v3.2
 
-                  >> A CLIENT-SIDE NEURAL INTERFACE FOR ADVANCED THREAT ANALYSIS <<
-                                    [VERSION 2.0 - HYBRID KERNEL]
-
-
-## // DIRECTIVA PRINCIPAL
-
-**ESCUDO DIGITAL** es un motor de análisis de amenazas y una plataforma de educación en ciberseguridad. Diseñado para operar en el `edge` (el navegador del cliente), funciona bajo un protocolo de confianza cero (`zero-trust`), procesando todos los datos de forma local. Su propósito es la identificación de vectores de ataque, la extracción de `payloads` y la formación del usuario en protocolos de defensa digital.
-
-## // CAPACIDADES DEL KERNEL v2.0
-
-* **MOTOR HÍBRIDO DE ANÁLISIS:** Combina un modelo de `zero-shot classification` para el análisis de intención semántica con un motor heurístico basado en reglas para detectar patrones de estafa específicos con una precisión mejorada.
-
-* **AMPLIO ESPECTRO DE AMENAZAS:** El Kernel ha sido actualizado para identificar un rango extendido de vectores de ataque, incluyendo `phishing`, `estafa de soporte técnico`, `sextorsión`, `fraude de caridad`, y más.
-
-* **EXTRACCIÓN DE PAYLOADS (NER):** El sistema escanea el texto en busca de "payloads" (URLs, emails, etc.) y los aísla para su inspección.
-
-* **PROTOCOLO DE DEFENSA ACTIVA:** Para cada amenaza detectada, el sistema no solo alerta al usuario, sino que también proporciona una explicación detallada del *modus operandi* del ataque y una lista de acciones recomendadas para neutralizar la amenaza y prevenir futuros incidentes.
-
-* **HISTORIAL DE ANÁLISIS LOCAL:** Todas las operaciones son registradas en un historial persistente y encriptado en el `localStorage` del navegador, permitiendo al usuario revisar casos pasados.
+// CLIENT-SIDE HYBRID KERNEL FOR ADVANCED THREAT ANALYSIS //
 
 ---
-// STATUS: ONLINE. AWAITING INPUT.
+
+## // Directiva Principal
+
+**Escudo Digital** es una herramienta de ciberseguridad y educación diseñada para operar enteramente en el navegador del usuario. Utiliza un avanzado **motor híbrido de IA** para analizar textos (emails, SMS, mensajes) en busca de posibles estafas, phishing y otros vectores de ataque basados en ingeniería social.
+
+Su principal ventaja es la **privacidad total**: ningún dato analizado abandona jamás el ordenador del usuario, ya que todo el procesamiento se realiza de forma local.
+
+## // Capacidades del Kernel
+
+* **Motor Híbrido de Análisis:** La herramienta combina dos motores para una máxima precisión:
+    1.  **IA Semántica (`zero-shot`):** Un modelo de lenguaje avanzado (`bart-large-mnli`) que entiende el contexto y la intención general del mensaje.
+    2.  **Motor Heurístico (de Reglas):** Un sistema de puntuación basado en una lista curada de palabras y patrones clave de alto riesgo, aportando la "experiencia de la calle" que a una IA generalista le podría faltar.
+
+* **Amplio Espectro de Amenazas:** El Kernel está preparado para identificar un rango extendido de amenazas modernas, incluyendo:
+    * Phishing
+    * Estafas de Soporte Técnico
+    * Sextorsión
+    * Notificaciones de Entrega Falsas
+    * Ofertas Engañosas
+    * Fraude de Caridad
+    * Spam y Falsa Urgencia
+
+* **Protocolo de Defensa Activa:** Por cada amenaza detectada, el sistema no solo emite una alerta, sino que también proporciona:
+    * Una **explicación clara** de en qué consiste el timo.
+    * Una **lista de consejos prácticos** sobre cómo actuar y protegerse.
+
+* **Extracción de Payloads (NER):** Utiliza Reconocimiento de Entidades Nombradas para identificar y resaltar automáticamente "payloads" peligrosos o de interés, como URLs, nombres de personas u organizaciones.
+
+* **Historial de Análisis Local:** Todos los análisis se guardan en el `localStorage` del navegador, permitiendo al usuario revisar casos pasados con total privacidad. Las entradas del historial se pueden eliminar individualmente.
+
+## // Protocolo de Uso
+
+1.  **Input:** Pegue el texto sospechoso en el área de análisis.
+2.  **Execute:** Active el botón `[ ANALYZE THREAT ]`.
+3.  **Output:** Reciba un veredicto instantáneo codificado por colores, una explicación de la amenaza, un protocolo de defensa y los payloads extraídos.
+
+## // Tech Stack
+
+* **Motor de IA:** `Transformers.js` (Xenova Port)
+* **Modelos:**
+    * `Xenova/bart-large-mnli` (Zero-Shot Classification)
+    * `Xenova/bert-base-multilingual-cased-ner-hrl` (Token Classification / NER)
+* **Interfaz:** `HTML5`, `CSS3` (Glassmorphism), `JavaScript (ESM)`
+* **Fondo:** `HTML Canvas` para animación generativa.
+
+---
+// STATUS: KERNEL v3.2 STABLE. READY FOR DEPLOYMENT.
