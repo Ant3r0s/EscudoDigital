@@ -6,30 +6,24 @@ ______  _____  _   _  _____  ____   _      ____    ____  _   _  _____  ____    _
  |_|     |______|\___/ |______||____/ |______|\____/  \____/ \___/ |______||____/(_)(_)|___|
 
                   >> A CLIENT-SIDE NEURAL INTERFACE FOR ADVANCED THREAT ANALYSIS <<
-                                    [VERSION 1.0 - OFFLINE KERNEL]
+                                    [VERSION 2.0 - HYBRID KERNEL]
 
 
 ## // DIRECTIVA PRINCIPAL
 
-**ESCUDO DIGITAL** es un motor de análisis de amenazas autónomo, diseñado para operar en el `edge` (el navegador del cliente). Funciona bajo un protocolo de confianza cero (`zero-trust`), procesando todos los datos de forma local sin transmitir información sensible a servidores externos. Su propósito es la identificación y neutralización de vectores de ataque basados en ingeniería social (phishing, estafas, etc.).
+**ESCUDO DIGITAL** es un motor de análisis de amenazas y una plataforma de educación en ciberseguridad. Diseñado para operar en el `edge` (el navegador del cliente), funciona bajo un protocolo de confianza cero (`zero-trust`), procesando todos los datos de forma local. Su propósito es la identificación de vectores de ataque, la extracción de `payloads` y la formación del usuario en protocolos de defensa digital.
 
-## // CAPACIDADES DEL KERNEL
+## // CAPACIDADES DEL KERNEL v2.0
 
-* **ANÁLISIS DE VECTORES DE AMENAZA ZERO-SHOT:** El núcleo de IA no depende de una base de datos de firmas de virus. Utiliza un modelo de clasificación `zero-shot` para analizar la intención semántica de cualquier texto y clasificarlo en tiempo real contra un conjunto de vectores de amenaza conocidos (`phishing`, `falsa urgencia`, `estafa`, `spam`, `legítimo`).
+* **MOTOR HÍBRIDO DE ANÁLISIS:** Combina un modelo de `zero-shot classification` para el análisis de intención semántica con un motor heurístico basado en reglas para detectar patrones de estafa específicos con una precisión mejorada.
 
-* **EXTRACCIÓN DE PAYLOADS (NER):** El sistema escanea el texto en busca de "payloads" (cargas útiles) y los aísla para su inspección. Utiliza `Named Entity Recognition` para identificar y resaltar URLs, direcciones de email, números de teléfono y otras entidades potencialmente maliciosas.
+* **AMPLIO ESPECTRO DE AMENAZAS:** El Kernel ha sido actualizado para identificar un rango extendido de vectores de ataque, incluyendo `phishing`, `estafa de soporte técnico`, `sextorsión`, `fraude de caridad`, y más.
 
-## // PROTOCOLO DE USO
+* **EXTRACCIÓN DE PAYLOADS (NER):** El sistema escanea el texto en busca de "payloads" (URLs, emails, etc.) y los aísla para su inspección.
 
-1.  **INPUT STREAM:** Inserte el flujo de datos de texto sospechoso en la terminal de análisis.
-2.  **EXECUTE ANALYSIS:** Active el botón `[ ANALIZAR AMENAZA ]`.
-3.  **RECEIVE OUTPUT:** El sistema devolverá un veredicto codificado por colores, un análisis de intención y los `payloads` extraídos del flujo de datos.
+* **PROTOCOLO DE DEFENSA ACTIVA:** Para cada amenaza detectada, el sistema no solo alerta al usuario, sino que también proporciona una explicación detallada del *modus operandi* del ataque y una lista de acciones recomendadas para neutralizar la amenaza y prevenir futuros incidentes.
 
-## // TECH STACK
-
-* **NEURAL ENGINE:** `Transformers.js` (Xenova Port)
-* **PIPELINES:** `zero-shot-text-classification`, `token-classification` (NER)
-* **INTERFACE:** `HTML5`, `CSS3`, `JavaScript (ESM)`
+* **HISTORIAL DE ANÁLISIS LOCAL:** Todas las operaciones son registradas en un historial persistente y encriptado en el `localStorage` del navegador, permitiendo al usuario revisar casos pasados.
 
 ---
 // STATUS: ONLINE. AWAITING INPUT.
