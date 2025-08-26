@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Inicialización del Kernel de IA ---
     async function initializeKernel() {
         status.textContent = '> STATUS: LOADING NEURAL CLASSIFIER...';
-        classifier = await window.pipeline('zero-shot-classification', 'Xenova/mobilebert-uncased-mnli');
+        classifier = await window.pipeline('zero-shot-classification', 'Xenova/bart-large-mnli');
         
         status.textContent = '> STATUS: LOADING NER PAYLOAD EXTRACTOR...';
         ner = await window.pipeline('token-classification', 'Xenova/bert-base-multilingual-cased-ner-hrl');
