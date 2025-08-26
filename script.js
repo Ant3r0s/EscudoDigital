@@ -53,11 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.classList.remove('hidden');
 
         try {
-            // 1. Análisis de Intención
             const classificationResult = await classifier(textToAnalyze, threatLabels);
             renderVerdict(classificationResult);
 
-            // 2. Extracción de Payloads
             const nerResult = await ner(textToAnalyze, {group_entities: true});
             renderNer(textToAnalyze, nerResult);
 
@@ -72,37 +70,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Renderizado de Salida ---
     function renderVerdict(result) {
-        const bestMatch = result.labels.reduce((prev, current) => (prev.score > current.score) ? prev : current);
-        const scorePercent = (bestMatch.score * 100).toFixed(1);
+        // **AQUÍ ESTÁ LA CORRECCIÓN DEL BUG**
+        // 1. Encontrar la puntuación más alta en el array de 'scores'.
+        const maxScore = Math.max(...result.scores);
+        // 2. Encontrar el índice (la posición) de esa puntuación.
+        const maxIndex = result.scores.indexOf(maxScore);
+        // 3. Usar ese índice para obtener la etiqueta y la puntuación correctas.
+        const bestLabel = result.labels[maxIndex];
+        const bestScore = result.scores[maxIndex];
+
+        const scorePercent = (bestScore * 100).toFixed(1);
         let verdictClass, verdictTitle;
 
-        if (bestMatch.label === 'legítimo' && bestMatch.score > 0.6) {
+        if (bestLabel === 'legítimo' && bestScore > 0.6) {
             verdictClass = 'alert-green';
             verdictTitle = `[LEGÍTIMO (${scorePercent}%)]`;
-        } else if (bestMatch.label === 'legítimo') {
+        } else if (bestLabel === 'legítimo') {
              verdictClass = 'alert-orange';
              verdictTitle = `[SOSPECHOSO - BAJA CONFIANZA (${scorePercent}%)]`;
-        } else if (bestMatch.score < 0.5) {
+        } else if (bestScore < 0.5) {
             verdictClass = 'alert-orange';
-            verdictTitle = `[AMENAZA INDETERMINADA, POSIBLE ${bestMatch.label.toUpperCase()} (${scorePercent}%)]`;
+            verdictTitle = `[AMENAZA INDETERMINADA, POSIBLE ${bestLabel.toUpperCase()} (${scorePercent}%)]`;
         } else {
             verdictClass = 'alert-red';
-            verdictTitle = `[ALERTA: ${bestMatch.label.toUpperCase()} (${scorePercent}%)]`;
+            verdictTitle = `[ALERTA: ${bestLabel.toUpperCase()} (${scorePercent}%)]`;
         }
         
         verdictBox.className = 'verdict-box'; // Reset
         verdictBox.classList.add(verdictClass);
         
-        const explanation = threatExplanations[bestMatch.label];
+        const explanation = threatExplanations[bestLabel];
         typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);
     }
 
     function renderNer(originalText, entities) {
         let highlightedText = originalText;
-        // Procesamos las entidades en orden inverso para no alterar los índices
         entities.sort((a, b) => b.start - a.start); 
         entities.forEach(entity => {
-            if (entity.entity_group === 'URL' || entity.entity_group === 'PER' || entity.entity_group === 'LOC' || entity.entity_group === 'ORG') {
+            if (['URL', 'PER', 'LOC', 'ORG'].includes(entity.entity_group)) {
                  const tag = `<span class="ner-text-highlight" title="Entidad: ${entity.entity_group}">${entity.word}</span>`;
                  highlightedText = highlightedText.substring(0, entity.start) + tag + highlightedText.substring(entity.end);
             }
@@ -113,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function typewriterEffect(element, text) {
         element.innerHTML = "";
         let i = 0;
-        const speed = 10; // ms
+        const speed = 10;
         function type() {
             if (i < text.length) {
                 element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
@@ -123,4 +128,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         type();
     }
+
+    // --- LÓGICA PARA EL FONDO DE MATRIX ---
+    const canvas = document.getElementById('matrix-background');
+    const ctx = canvas.getContext('2d');
+
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    let cols = Math.floor(w / 20) + 1;
+    let ypos = Array(cols).fill(0);
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+
+    function matrix() {
+        ctx.fillStyle = 'rgba(0,0,0,.05)';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = var(--accent-cyan);
+        ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;
+
+        ypos.forEach((y, ind) => {
+            const text = String.fromCharCode(Math.random() * 128);
+            const x = ind * 20;
+            ctx.fillText(text, x, y);
+            if (y > 100 + Math.random() * 10000) {
+                ypos[ind] = 0;
+            } else {
+                ypos[ind] = y + 20;
+            }
+        });
+    }
+    
+    setInterval(matrix, 50);
+
+    window.addEventListener('resize', () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+        cols = Math.floor(w / 20) + 1;
+        ypos = Array(cols).fill(0);
+    });
 });
