@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCUDO DIGITAL</title>
+    <title>ESCUDO DIGITAL v2.0</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,13 +26,19 @@
                 <p>> Insert data stream for threat analysis:</p>
                 <textarea id="input-text" class="input-textarea" placeholder="> Paste suspicious text here..."></textarea>
                 
-                <button id="analyze-btn" class="analyze-button">[ ANALYZE THREAT ]</button>
+                <div class="main-controls">
+                    <button id="analyze-btn" class="analyze-button">[ ANALYZE THREAT ]</button>
+                    <button id="history-btn" class="action-button secondary">[ HISTORY ]</button>
+                </div>
                 
                 <div id="results-container" class="results-container hidden">
                     <p>> Intent Analysis:</p>
                     <div id="verdict-box" class="verdict-box">
                         <p id="verdict-text"></p>
                     </div>
+
+                    <p>> Defense Protocol:</p>
+                    <div id="advice-box" class="advice-box"></div>
 
                     <p>> Extracted Payloads (NER):</p>
                     <div id="ner-box" class="ner-box">
@@ -46,6 +52,15 @@
             </div>
         </div>
     </div>
+    
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Analysis History</h2>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
     <script src="script.js" type="module"></script>
 </body>
 </html>
