@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let classifier = null;
     let ner = null;
 
-    // --- Base de Conocimiento de Amenazas ---
+    // --- Base de Conocimiento de Amenazas v2.1 ---
     const threatLabels = [
         'phishing', 'estafa de soporte técnico', 'oferta engañosa', 'estafa',
         'sextorsión', 'fraude de caridad', 'notificación de entrega falsa',
@@ -36,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'spam': 'Correo o mensaje no solicitado, generalmente publicitario y enviado de forma masiva.',
         'legítimo': 'El texto no presenta indicadores claros de amenaza y parece ser genuino.',
     };
+    
+    // Lista de consejos completa
     const threatAdvice = {
         'phishing': [
             'NUNCA hagas clic en enlaces de correos o SMS de este tipo.',
@@ -46,45 +48,55 @@ document.addEventListener('DOMContentLoaded', () => {
         'estafa de soporte técnico': [
             'Cuelga el teléfono o cierra el chat. Microsoft/Apple NUNCA te contactarán de esta forma.',
             'No instales ningún software que te pidan (AnyDesk, TeamViewer).',
-            'Nunca les des el control de tu ordenador.',
-            'Reinicia tu equipo si has visto algún pop-up de alerta en el navegador.'
+            'Nunca les des el control de tu ordenador.'
         ],
         'oferta engañosa': [
-            'Desconfía de ofertas de trabajo que no has solicitado y que prometen mucho por poco esfuerzo.',
+            'Desconfía de ofertas que no has solicitado y que prometen mucho por poco esfuerzo.',
             'Nunca pagues por adelantado para un trabajo o para recibir un premio.',
             'Investiga a la empresa o persona que te contacta. Busca opiniones en Google.'
         ],
         'sextorsión': [
             'NO PAGUES. Pagar no garantiza que borren nada y te pedirán más dinero.',
-            'Denuncia el caso a la policía. Guarda todas las pruebas (correos, mensajes).',
-            'Bloquea al remitente y no respondas a sus mensajes.',
-            'Asegura tus cuentas cambiando las contraseñas.'
+            'Denuncia el caso a la policía y guarda todas las pruebas.',
+            'Bloquea al remitente y no respondas a sus mensajes.'
         ],
         'notificación de entrega falsa': [
-            'No pagues ninguna tasa. Las empresas de logística gestionan las aduanas de otra forma.',
-            'Busca el número de seguimiento que te proporcionan en la web OFICIAL de la empresa de paquetería.',
-            'Elimina el mensaje. Es un intento de robar los datos de tu tarjeta por unos pocos euros.'
+            'No pagues ninguna tasa aduanera desde un enlace de SMS/email.',
+            'Copia el número de seguimiento y búscalo en la web OFICIAL de la empresa de paquetería.',
+            'Las empresas de logística gestionan las aduanas de otra forma, nunca por SMS con enlaces de pago directo.',
+            'Elimina el mensaje. Es un intento de robar los datos de tu tarjeta.'
         ],
         'estafa': [
-            'Si suena demasiado bueno para ser verdad, lo es.',
+            'Si suena demasiado bueno para ser verdad, casi seguro que no lo es.',
             'Nunca envíes dinero a alguien que no conoces en persona.',
-            'No compartas información personal o financiera con desconocidos.'
+            'No compartas información personal o financiera con desconocidos que te contactan de la nada.'
         ],
         'falsa urgencia': [
-            'Tómate un respiro. Las estafas buscan que actúes con pánico.',
+            'Tómate un respiro. Las estafas buscan que actúes con pánico y sin pensar.',
             'Contacta con la supuesta entidad (tu banco, tu jefe) a través de un canal oficial que tú conozcas, no el que te proporcionan en el mensaje.',
-            'Cuestiona por qué necesitan que actúes AHORA MISMO.'
+            'Cuestiona por qué necesitan que actúes AHORA MISMO. Las empresas serias dan plazos razonables.'
+        ],
+        'fraude de caridad': [
+            'Verifica que la ONG es real buscando su web oficial en Google.',
+            'Dona siempre a través de los canales oficiales de la organización, no a través de enlaces en correos.',
+            'Desconfía de peticiones que presionan con imágenes emotivas y exigen una acción inmediata.'
+        ],
+        'spam': [
+            'No respondas al mensaje, ni siquiera para pedir que te den de baja.',
+            'Marca el mensaje como Correo no deseado o Spam en tu gestor de correo.',
+            'No hagas clic en ningún enlace ni descargues archivos adjuntos.'
         ]
     };
     
+    // Diccionario de palabras peligrosas ampliado
     const threatKeywords = {
-        'URGENTE': 15, 'inmediato': 15, 'ahora mismo': 15, 'última oportunidad': 15, '12 horas': 10, '24 horas': 10,
-        'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'IBAN': 20,
-        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 15,
-        'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20,
-        'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20,
-        'haga clic aquí': 10, 'enlace seguro': 10,
-        'factura pendiente': 10, 'pago': 10,
+        'URGENTE': 15, 'inmediato': 15, 'ahora mismo': 15, 'última oportunidad': 15, 'dispone de 24 horas': 15, '12 horas': 15, 'tiempo limitado': 10,
+        'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'IBAN': 20, 'tarjeta de crédito': 15, 'pago': 10,
+        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
+        'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, 'directora financiera': 10,
+        'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20, 'oferta de trabajo': 10,
+        'haga clic': 10, 'en el siguiente enlace': 10,
+        'paquete': 15, 'entrega': 15, 'envío': 15, 'tasas de aduana': 25, 'no ha podido ser entregado': 20
     };
 
     // --- Inicialización del Kernel de IA ---
@@ -141,23 +153,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const heuristicScore = calculateHeuristicScore(originalText);
         const maxScore = Math.max(...aiResult.scores);
         const maxIndex = aiResult.scores.indexOf(maxScore);
-        const bestLabel = aiResult.labels[maxIndex];
+        let bestLabel = aiResult.labels[maxIndex];
         const bestScore = aiResult.scores[maxIndex];
 
-        let finalVerdictLabel = bestLabel;
-        if (heuristicScore > 30 && bestLabel === 'legítimo') finalVerdictLabel = 'estafa';
-        if (heuristicScore > 15 && bestLabel === 'legítimo' && bestScore < 0.8) finalVerdictLabel = 'phishing';
+        // Lógica de corrección del motor híbrido
+        if (heuristicScore > 20 && bestLabel === 'legítimo') {
+            const possibleScams = ['phishing', 'notificación de entrega falsa', 'estafa'];
+            const scamScores = aiResult.labels.map((label, index) => ({label, score: aiResult.scores[index]}))
+                                            .filter(item => possibleScams.includes(item.label));
+            if (scamScores.length > 0) {
+                bestLabel = scamScores.reduce((prev, current) => (prev.score > current.score) ? prev : current).label;
+            }
+        }
 
         const scorePercent = (bestScore * 100).toFixed(1);
-        const explanation = threatExplanations[finalVerdictLabel];
+        const explanation = threatExplanations[bestLabel];
         let verdictClass, verdictTitle;
 
-        if (heuristicScore >= 35 || (finalVerdictLabel !== 'legítimo' && bestScore > 0.7)) {
+        // Umbrales ajustados para ser más sensibles
+        if (heuristicScore >= 25 || (bestLabel !== 'legítimo' && bestScore > 0.6)) {
              verdictClass = 'alert-red';
-             verdictTitle = `[ALERTA: ${finalVerdictLabel.toUpperCase()} (Confianza: ${scorePercent}% / Riesgo: ${heuristicScore}pts)]`;
-        } else if (finalVerdictLabel !== 'legítimo') {
+             verdictTitle = `[ALERTA: ${bestLabel.toUpperCase()} (Confianza: ${scorePercent}% / Riesgo Heurístico: ${heuristicScore}pts)]`;
+        } else if (bestLabel !== 'legítimo') {
              verdictClass = 'alert-orange';
-             verdictTitle = `[SOSPECHOSO: ${finalVerdictLabel.toUpperCase()} (Confianza: ${scorePercent}% / Riesgo: ${heuristicScore}pts)]`;
+             verdictTitle = `[SOSPECHOSO: ${bestLabel.toUpperCase()} (Confianza: ${scorePercent}% / Riesgo Heurístico: ${heuristicScore}pts)]`;
         } else {
              verdictClass = 'alert-green';
              verdictTitle = `[LEGÍTIMO (Confianza: ${scorePercent}%)]`;
@@ -166,10 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
         verdictBox.className = 'verdict-box';
         verdictBox.classList.add(verdictClass);
         typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);
-        renderAdvice(finalVerdictLabel);
-        saveToHistory(originalText, `${verdictTitle}\n> ${explanation}`, finalVerdictLabel);
+        renderAdvice(bestLabel);
+        saveToHistory(originalText, `${verdictTitle}\n> ${explanation}`, bestLabel);
     }
-    
+
     function renderAdvice(threat) {
         adviceBox.innerHTML = '';
         const adviceList = threatAdvice[threat];
@@ -267,7 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica de la Ventana Modal y Utilidades ---
-    historyBtn.addEventListener('click', () => historyModal.classList.remove('hidden'));
+    historyBtn.addEventListener('click', () => {
+        loadHistory(); // Recargar el historial cada vez que se abre
+        historyModal.classList.remove('hidden');
+    });
     closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
     window.addEventListener('click', (event) => { if (event.target === historyModal) { historyModal.classList.add('hidden'); } });
     
