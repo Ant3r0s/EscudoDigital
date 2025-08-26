@@ -70,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Renderizado de Salida ---
     function renderVerdict(result) {
-        // **AQUÍ ESTÁ LA CORRECCIÓN DEL BUG**
         // 1. Encontrar la puntuación más alta en el array de 'scores'.
         const maxScore = Math.max(...result.scores);
         // 2. Encontrar el índice (la posición) de esa puntuación.
@@ -145,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = 'rgba(0,0,0,.05)';
         ctx.fillRect(0, 0, w, h);
         
-        // **CAMBIO DE COLOR A BLANCO/GRIS**
         ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';
         ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;
 
