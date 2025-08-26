@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCUDO DIGITAL v3.0</title>
+    <title>ESCUDO DIGITAL v3.1</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script type="module">
-        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
-        window.pipeline = pipeline;
-    </script>
 </head>
 <body>
     <canvas id="matrix-background"></canvas>
@@ -19,12 +15,17 @@
         <div class="glass-card">
             <header class="terminal-header">
                 <h1 class="glitch" data-text="ESCUDO DIGITAL">ESCUDO DIGITAL</h1>
-                <p class="subtitle">// REINFORCED KERNEL v3.0: ONLINE //</p>
+                <p class="subtitle">// REINFORCED KERNEL v3.1: ONLINE //</p>
             </header>
             
             <div class="content">
                 <p>> Insert data stream for threat analysis:</p>
                 <textarea id="input-text" class="input-textarea" placeholder="> Paste suspicious text here..."></textarea>
+                
+                <div class="utility-controls">
+                    <button id="copy-btn" class="action-button utility">[ COPY ]</button>
+                    <button id="clear-btn" class="action-button utility">[ CLEAR ]</button>
+                </div>
                 
                 <div class="main-controls">
                     <button id="analyze-btn" class="analyze-button">[ ANALYZE THREAT ]</button>
@@ -33,17 +34,11 @@
                 
                 <div id="results-container" class="results-container hidden">
                     <p>> Intent Analysis:</p>
-                    <div id="verdict-box" class="verdict-box">
-                        <p id="verdict-text"></p>
-                    </div>
-
+                    <div id="verdict-box" class="verdict-box"><p id="verdict-text"></p></div>
                     <p>> Defense Protocol:</p>
                     <div id="advice-box" class="advice-box"></div>
-
                     <p>> Extracted Payloads (NER):</p>
-                    <div id="ner-box" class="ner-box">
-                        <p id="ner-text"></p>
-                    </div>
+                    <div id="ner-box" class="ner-box"><p id="ner-text"></p></div>
                 </div>
 
                 <div id="status" class="status-bar">
