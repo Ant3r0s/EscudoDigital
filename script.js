@@ -5,175 +5,196 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsContainer = document.getElementById('results-container');
     const verdictBox = document.getElementById('verdict-box');
     const verdictText = document.getElementById('verdict-text');
+    const adviceBox = document.getElementById('advice-box');
     const nerBox = document.getElementById('ner-box');
     const nerText = document.getElementById('ner-text');
     const status = document.getElementById('status').querySelector('p');
+    const historyBtn = document.getElementById('history-btn');
+    const historyModal = document.getElementById('history-modal');
+    const closeModalBtn = document.querySelector('.close-button');
+    const historyList = document.getElementById('history-list');
 
     // --- Estado del Kernel ---
     let classifier = null;
     let ner = null;
 
-    // --- Directivas de Análisis ---
-    const threatLabels = ['phishing', 'estafa', 'spam', 'oferta engañosa', 'falsa urgencia', 'legítimo'];
+    // --- NUEVO: Base de Conocimiento de Amenazas ---
+    const threatLabels = [
+        'phishing', 'estafa de soporte técnico', 'oferta engañosa', 'estafa', 
+        'sextorsión', 'fraude de caridad', 'notificación de entrega falsa', 
+        'falsa urgencia', 'spam', 'legítimo'
+    ];
     const threatExplanations = {
-        'phishing': 'El texto contiene elementos comunes de phishing, como la solicitud de credenciales o clics en enlaces sospechosos para "verificar" una cuenta.',
-        'estafa': 'El texto presenta patrones de estafa, prometiendo ganancias irreales o solicitando pagos por adelantado.',
-        'oferta engañosa': 'La propuesta (trabajo, premio, etc.) contiene señales de ser fraudulenta o engañosa.',
-        'spam': 'El contenido es genérico, no solicitado y probablemente enviado de forma masiva.',
-        'falsa urgencia': 'El mensaje intenta crear pánico o urgencia para forzar una acción rápida sin pensar.',
+        'phishing': 'El texto suplanta la identidad de una entidad de confianza (banco, red social) para robar tus credenciales.',
+        'estafa de soporte técnico': 'Finge ser un soporte técnico (Microsoft, Apple) para que les des acceso a tu equipo o les pagues por un falso problema.',
+        'oferta engañosa': 'Una propuesta (trabajo, premio, inversión) que parece demasiado buena para ser verdad, probablemente lo sea.',
+        'estafa': 'Un término general para cualquier intento de engañarte para obtener dinero o información valiosa.',
+        'sextorsión': 'Amenaza con publicar supuesto material íntimo tuyo si no realizas un pago.',
+        'fraude de caridad': 'Pide donaciones para una causa falsa o se hace pasar por una ONG conocida.',
+        'notificación de entrega falsa': 'Simula ser una empresa de paquetería (Correos, Amazon) diciendo que tienes un paquete retenido por una pequeña tasa.',
+        'falsa urgencia': 'Táctica usada en muchas estafas para que actúes con pánico y sin pensar.',
+        'spam': 'Correo o mensaje no solicitado, generalmente publicitario y enviado de forma masiva.',
         'legítimo': 'El texto no presenta indicadores claros de amenaza y parece ser genuino.',
     };
-
-    // **NUEVO: MOTOR DE REGLAS / HEURÍSTICO (LA "EXPERIENCIA")**
-    const threatKeywords = {
-        'URGENTE': 15, 'inmediato': 15, 'ahora mismo': 15, 'última oportunidad': 15, '12 horas': 10, '24 horas': 10,
-        'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'IBAN': 20,
-        'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 15,
-        'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, // Tácticas de aislamiento
-        'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20,
-        'haga clic aquí': 10, 'enlace seguro': 10,
-        'factura pendiente': 10, 'pago': 10,
+    const threatAdvice = {
+        'phishing': [
+            'NUNCA hagas clic en enlaces de correos o SMS de este tipo.',
+            'Verifica la dirección del remitente. A menudo contiene errores sutiles.',
+            'Accede siempre a tu cuenta escribiendo la URL oficial en el navegador, no desde el enlace.',
+            'Ninguna entidad seria te pedirá tu contraseña o datos completos por correo.'
+        ],
+        'estafa de soporte técnico': [
+            'Cuelga el teléfono o cierra el chat. Microsoft/Apple NUNCA te contactarán de esta forma.',
+            'No instales ningún software que te pidan (AnyDesk, TeamViewer).',
+            'Nunca les des el control de tu ordenador.',
+            'Reinicia tu equipo si has visto algún pop-up de alerta en el navegador.'
+        ],
+        'oferta engañosa': [
+            'Desconfía de ofertas de trabajo que no has solicitado y que prometen mucho por poco esfuerzo.',
+            'Nunca pagues por adelantado para un trabajo o para recibir un premio.',
+            'Investiga a la empresa o persona que te contacta. Busca opiniones en Google.'
+        ],
+        'sextorsión': [
+            'NO PAGUES. Pagar no garantiza que borren nada y te pedirán más dinero.',
+            'Denuncia el caso a la policía. Guarda todas las pruebas (correos, mensajes).',
+            'Bloquea al remitente y no respondas a sus mensajes.',
+            'Asegura tus cuentas cambiando las contraseñas.'
+        ],
+        'notificación de entrega falsa': [
+            'No pagues ninguna tasa. Las empresas de logística gestionan las aduanas de otra forma.',
+            'Busca el número de seguimiento que te proporcionan en la web OFICIAL de la empresa de paquetería.',
+            'Elimina el mensaje. Es un intento de robar los datos de tu tarjeta por unos pocos euros.'
+        ],
+        // ... (Se pueden añadir consejos para el resto de categorías)
     };
+    
+    // El motor heurístico se mantiene
+    const threatKeywords = { 'URGENTE': 15, 'inmediato': 15, 'cuenta bancaria': 20, 'transferencia': 15, 'IBAN': 20, 'contraseña': 15, 'credenciales': 15, 'no puedo atender llamadas': 25, 'ha ganado': 20, 'haga clic': 10, 'factura': 10 };
 
     // --- Inicialización del Kernel de IA ---
-    async function initializeKernel() {
-        status.textContent = '> STATUS: LOADING NEURAL CLASSIFIER...';
-        classifier = await window.pipeline('zero-shot-classification', 'Xenova/bart-large-mnli', { local_files_only: false });
-        status.textContent = '> STATUS: LOADING NER PAYLOAD EXTRACTOR...';
-        ner = await window.pipeline('token-classification', 'Xenova/bert-base-multilingual-cased-ner-hrl', { local_files_only: false });
-        status.textContent = '> STATUS: KERNEL ONLINE. AWAITING INPUT.';
-        analyzeBtn.disabled = false;
-        analyzeBtn.textContent = '[ ANALYZE THREAT ]';
-    }
-    analyzeBtn.disabled = true;
-    analyzeBtn.textContent = '[ KERNEL OFFLINE... ]';
+    async function initializeKernel() { /* ... (sin cambios) ... */ }
     initializeKernel();
 
     // --- Bucle Principal de Ejecución ---
-    analyzeBtn.addEventListener('click', async () => {
-        const textToAnalyze = inputText.value;
-        if (textToAnalyze.trim().length < 20) {
-            status.textContent = '> ERROR: INPUT STREAM TOO SHORT.'; return;
-        }
-        analyzeBtn.disabled = true;
-        status.textContent = '> EXECUTING THREAT ANALYSIS... PLEASE WAIT.';
-        resultsContainer.classList.remove('hidden');
-        try {
-            const classificationResult = await classifier(textToAnalyze, threatLabels);
-            const nerResult = await ner(textToAnalyze, {group_entities: true});
-            
-            // **MOTOR HÍBRIDO EN ACCIÓN**
-            renderVerdict(classificationResult, textToAnalyze);
-            renderNer(textToAnalyze, nerResult);
-
-            status.textContent = '> ANALYSIS COMPLETE. STANDING BY.';
-        } catch (error) {
-            console.error("Analysis Error:", error);
-            status.textContent = `> KERNEL PANIC: ${error.message}`;
-        } finally {
-            analyzeBtn.disabled = false;
-        }
-    });
-
-    // --- NUEVA FUNCIÓN para el motor de reglas ---
-    function calculateHeuristicScore(text) {
-        let score = 0;
-        const lowerCaseText = text.toLowerCase();
-        for (const keyword in threatKeywords) {
-            if (lowerCaseText.includes(keyword.toLowerCase())) {
-                score += threatKeywords[keyword];
-            }
-        }
-        return score;
-    }
-
-    // --- Renderizado de Salida (MODIFICADO PARA EL MOTOR HÍBRIDO) ---
+    analyzeBtn.addEventListener('click', async () => { /* ... (sin cambios) ... */ });
+    
+    // --- Renderizado de Salida ---
     function renderVerdict(aiResult, originalText) {
-        // 1. Obtenemos el "instinto" de la IA
+        const heuristicScore = calculateHeuristicScore(originalText);
         const maxScore = Math.max(...aiResult.scores);
         const maxIndex = aiResult.scores.indexOf(maxScore);
         const bestLabel = aiResult.labels[maxIndex];
         const bestScore = aiResult.scores[maxIndex];
 
-        // 2. Obtenemos la "experiencia" del motor de reglas
-        const heuristicScore = calculateHeuristicScore(originalText);
-
-        // 3. Combinamos ambos para el veredicto final
         let finalVerdictLabel = bestLabel;
-        // Si el motor de reglas encuentra muchas amenazas, su opinión tiene más peso.
-        if (heuristicScore > 30 && bestLabel === 'legítimo') {
-             finalVerdictLabel = 'estafa'; // Corregimos a la IA
-        }
-        // Si la IA duda pero las reglas ven algo, subimos la alerta.
-        if (heuristicScore > 15 && bestLabel === 'legítimo' && bestScore < 0.8) {
-             finalVerdictLabel = 'phishing';
-        }
+        if (heuristicScore > 30 && bestLabel === 'legítimo') finalVerdictLabel = 'estafa';
+        if (heuristicScore > 15 && bestLabel === 'legítimo' && bestScore < 0.8) finalVerdictLabel = 'phishing';
 
-        const finalScorePercent = (bestScore * 100).toFixed(1);
+        const scorePercent = (bestScore * 100).toFixed(1);
         const explanation = threatExplanations[finalVerdictLabel];
         let verdictClass, verdictTitle;
 
-        if (heuristicScore >= 35) {
+        if (heuristicScore >= 35 || (finalVerdictLabel !== 'legítimo' && bestScore > 0.6)) {
              verdictClass = 'alert-red';
-             verdictTitle = `[ALERTA MÁXIMA: ${finalVerdictLabel.toUpperCase()} (Heurística: ${heuristicScore}pts)]`;
+             verdictTitle = `[ALERTA: ${finalVerdictLabel.toUpperCase()} (${scorePercent}%)]`;
         } else if (finalVerdictLabel !== 'legítimo') {
              verdictClass = 'alert-orange';
-             verdictTitle = `[SOSPECHOSO: ${finalVerdictLabel.toUpperCase()} (${finalScorePercent}%)]`;
+             verdictTitle = `[SOSPECHOSO: ${finalVerdictLabel.toUpperCase()} (${scorePercent}%)]`;
         } else {
              verdictClass = 'alert-green';
-             verdictTitle = `[LEGÍTIMO (${finalScorePercent}%)]`;
+             verdictTitle = `[LEGÍTIMO (${scorePercent}%)]`;
         }
         
         verdictBox.className = 'verdict-box';
         verdictBox.classList.add(verdictClass);
         typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);
+
+        // **NUEVO: Renderizar los consejos de prevención**
+        renderAdvice(finalVerdictLabel);
+        
+        // Guardamos el resultado completo en el historial
+        saveToHistory(originalText, `${verdictTitle}\n> ${explanation}`, finalVerdictLabel);
+    }
+    
+    function renderAdvice(threat) {
+        adviceBox.innerHTML = '';
+        const adviceList = threatAdvice[threat];
+        if (adviceList && adviceList.length > 0) {
+            const title = document.createElement('h3');
+            title.textContent = 'Protocolo de Actuación Recomendado:';
+            const list = document.createElement('ul');
+            adviceList.forEach(tip => {
+                const item = document.createElement('li');
+                item.textContent = tip;
+                list.appendChild(item);
+            });
+            adviceBox.appendChild(title);
+            adviceBox.appendChild(list);
+        }
     }
 
-    function renderNer(originalText, entities) {
-        let highlightedText = originalText;
-        entities.sort((a, b) => b.start - a.start); 
-        entities.forEach(entity => {
-            if (['URL', 'PER', 'LOC', 'ORG'].includes(entity.entity_group)) {
-                 const tag = `<span class="ner-text-highlight" title="Entidad: ${entity.entity_group}">${entity.word}</span>`;
-                 highlightedText = highlightedText.substring(0, entity.start) + tag + highlightedText.substring(entity.end);
-            }
+    // --- Lógica del Historial (Ahora guarda más datos) ---
+    function saveToHistory(text, verdict, label) {
+        const history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];
+        const newEntry = {
+            id: Date.now(),
+            date: new Date().toLocaleString('es-ES'),
+            text: text,
+            verdict: verdict,
+            label: label
+        };
+        history.unshift(newEntry);
+        localStorage.setItem('escudoDigitalHistory', JSON.stringify(history));
+        renderHistory();
+    }
+    function loadHistory() { renderHistory(); }
+    function deleteFromHistory(id) {
+        let history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];
+        history = history.filter(entry => entry.id !== id);
+        localStorage.setItem('escudoDigitalHistory', JSON.stringify(history));
+        renderHistory();
+    }
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];
+        historyList.innerHTML = '';
+        if (history.length === 0) {
+            historyList.innerHTML = '<p>No hay análisis guardados.</p>';
+            return;
+        }
+        history.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <div class="history-item-date">${entry.date}</div>
+                <p class="history-item-preview">${entry.text}</p>
+                <button class="delete-btn" title="Eliminar entrada">
+                    <svg viewBox="0 0 448 512" fill="currentColor" width="16" height="16"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                </button>
+            `;
+            item.addEventListener('click', () => {
+                inputText.value = entry.text;
+                verdictBox.className = 'verdict-box'; // Reset
+                typewriterEffect(verdictText, entry.verdict);
+                renderAdvice(entry.label);
+                renderNer(entry.text, []); // Reset NER or re-run analysis
+                resultsContainer.classList.remove('hidden');
+                historyModal.classList.add('hidden');
+            });
+            const deleteBtn = item.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                deleteFromHistory(entry.id);
+            });
+            historyList.appendChild(item);
         });
-        nerText.innerHTML = highlightedText.replace(/\n/g, '<br>');
     }
 
-    function typewriterEffect(element, text) {
-        element.innerHTML = ""; let i = 0; const speed = 10;
-        function type() { if (i < text.length) { element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i); i++; setTimeout(type, speed); } }
-        type();
-    }
-
-    // --- LÓGICA PARA EL FONDO DE MATRIX ---
-    const canvas = document.getElementById('matrix-background');
-    const ctx = canvas.getContext('2d');
-    let w = canvas.width = window.innerWidth;
-    let h = canvas.height = window.innerHeight;
-    let cols = Math.floor(w / 20) + 1;
-    let ypos = Array(cols).fill(0);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, w, h);
-    function matrix() {
-        ctx.fillStyle = 'rgba(0,0,0,.05)';
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';
-        ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;
-        ypos.forEach((y, ind) => {
-            const text = String.fromCharCode(Math.random() * 128);
-            const x = ind * 20;
-            ctx.fillText(text, x, y);
-            if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
-            else ypos[ind] = y + 20;
-        });
-    }
-    setInterval(matrix, 50);
-    window.addEventListener('resize', () => {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-        cols = Math.floor(w / 20) + 1;
-        ypos = Array(cols).fill(0);
-    });
+    // El resto de funciones (initializeKernel, analyzeBtn.click, etc. se mantienen)
+    // El script completo es largo, pero estas son todas las piezas nuevas y modificadas.
+    // El código completo de abajo asegura que no falte nada.
 });
+
+// =====================================================================
+// === CÓDIGO COMPLETO DE SCRIPT.JS PARA EVITAR CUALQUIER OMISIÓN ===
+// =====================================================================
+document.addEventListener('DOMContentLoaded', () => {const inputText = document.getElementById('input-text');const analyzeBtn = document.getElementById('analyze-btn');const resultsContainer = document.getElementById('results-container');const verdictBox = document.getElementById('verdict-box');const verdictText = document.getElementById('verdict-text');const adviceBox = document.getElementById('advice-box');const nerBox = document.getElementById('ner-box');const nerText = document.getElementById('ner-text');const status = document.getElementById('status').querySelector('p');const historyBtn = document.getElementById('history-btn');const historyModal = document.getElementById('history-modal');const closeModalBtn = document.querySelector('.close-button');const historyList = document.getElementById('history-list');let classifier = null;let ner = null;const threatLabels = ['phishing', 'estafa de soporte técnico', 'oferta engañosa', 'estafa', 'sextorsión', 'fraude de caridad', 'notificación de entrega falsa', 'falsa urgencia', 'spam', 'legítimo'];const threatExplanations = {'phishing': 'El texto suplanta la identidad de una entidad de confianza (banco, red social) para robar tus credenciales.','estafa de soporte técnico': 'Finge ser un soporte técnico (Microsoft, Apple) para que les des acceso a tu equipo o les pagues por un falso problema.','oferta engañosa': 'Una propuesta (trabajo, premio, inversión) que parece demasiado buena para ser verdad, probablemente lo sea.','estafa': 'Un término general para cualquier intento de engañarte para obtener dinero o información valiosa.','sextorsión': 'Amenaza con publicar supuesto material íntimo tuyo si no realizas un pago.','fraude de caridad': 'Pide donaciones para una causa falsa o se hace pasar por una ONG conocida.','notificación de entrega falsa': 'Simula ser una empresa de paquetería (Correos, Amazon) diciendo que tienes un paquete retenido por una pequeña tasa.','falsa urgencia': 'Táctica usada en muchas estafas para que actúes con pánico y sin pensar.','spam': 'Correo o mensaje no solicitado, generalmente publicitario y enviado de forma masiva.','legítimo': 'El texto no presenta indicadores claros de amenaza y parece ser genuino.',};const threatAdvice = {'phishing': ['NUNCA hagas clic en enlaces de correos o SMS de este tipo.','Verifica la dirección del remitente. A menudo contiene errores sutiles.','Accede siempre a tu cuenta escribiendo la URL oficial en el navegador, no desde el enlace.','Ninguna entidad seria te pedirá tu contraseña o datos completos por correo.'],'estafa de soporte técnico': ['Cuelga el teléfono o cierra el chat. Microsoft/Apple NUNCA te contactarán de esta forma.','No instales ningún software que te pidan (AnyDesk, TeamViewer).','Nunca les des el control de tu ordenador.','Reinicia tu equipo si has visto algún pop-up de alerta en el navegador.'],'oferta engañosa': ['Desconfía de ofertas de trabajo que no has solicitado y que prometen mucho por poco esfuerzo.','Nunca pagues por adelantado para un trabajo o para recibir un premio.','Investiga a la empresa o persona que te contacta. Busca opiniones en Google.'],'sextorsión': ['NO PAGUES. Pagar no garantiza que borren nada y te pedirán más dinero.','Denuncia el caso a la policía. Guarda todas las pruebas (correos, mensajes).','Bloquea al remitente y no respondas a sus mensajes.','Asegura tus cuentas cambiando las contraseñas.'],'notificación de entrega falsa': ['No pagues ninguna tasa. Las empresas de logística gestionan las aduanas de otra forma.','Busca el número de seguimiento que te proporcionan en la web OFICIAL de la empresa de paquetería.','Elimina el mensaje. Es un intento de robar los datos de tu tarjeta por unos pocos euros.'],};const threatKeywords = {'URGENTE': 15,'inmediato': 15,'cuenta bancaria': 20,'transferencia': 15,'IBAN': 20,'contraseña': 15,'credenciales': 15,'no puedo atender llamadas': 25,'ha ganado': 20,'haga clic': 10,'factura': 10,};async function initializeKernel() {status.textContent = '> STATUS: LOADING NEURAL CLASSIFIER...';classifier = await window.pipeline('zero-shot-classification', 'Xenova/bart-large-mnli', { local_files_only: false });status.textContent = '> STATUS: LOADING NER PAYLOAD EXTRACTOR...';ner = await window.pipeline('token-classification', 'Xenova/bert-base-multilingual-cased-ner-hrl', { local_files_only: false });status.textContent = '> STATUS: KERNEL ONLINE. AWAITING INPUT.';analyzeBtn.disabled = false;analyzeBtn.textContent = '[ ANALYZE THREAT ]';}analyzeBtn.disabled = true;analyzeBtn.textContent = '[ KERNEL OFFLINE... ]';initializeKernel();analyzeBtn.addEventListener('click', async () => {const textToAnalyze = inputText.value;if (textToAnalyze.trim().length < 20) {status.textContent = '> ERROR: INPUT STREAM TOO SHORT.';return;}analyzeBtn.disabled = true;status.textContent = '> EXECUTING THREAT ANALYSIS... PLEASE WAIT.';resultsContainer.classList.remove('hidden');try {const classificationResult = await classifier(textToAnalyze, threatLabels);const nerResult = await ner(textToAnalyze, { group_entities: true });renderVerdict(classificationResult, textToAnalyze);renderNer(textToAnalyze, nerResult);status.textContent = '> ANALYSIS COMPLETE. STANDING BY.';} catch (error) {console.error("Analysis Error:", error);status.textContent = `> KERNEL PANIC: ${error.message}`;} finally {analyzeBtn.disabled = false;}});function calculateHeuristicScore(text) {let score = 0;const lowerCaseText = text.toLowerCase();for (const keyword in threatKeywords) {if (lowerCaseText.includes(keyword.toLowerCase())) {score += threatKeywords[keyword];}}return score;}function renderVerdict(aiResult, originalText) {const heuristicScore = calculateHeuristicScore(originalText);const maxScore = Math.max(...aiResult.scores);const maxIndex = aiResult.scores.indexOf(maxScore);const bestLabel = aiResult.labels[maxIndex];const bestScore = aiResult.scores[maxIndex];let finalVerdictLabel = bestLabel;if (heuristicScore > 30 && bestLabel === 'legítimo') finalVerdictLabel = 'estafa';if (heuristicScore > 15 && bestLabel === 'legítimo' && bestScore < 0.8) finalVerdictLabel = 'phishing';const scorePercent = (bestScore * 100).toFixed(1);const explanation = threatExplanations[finalVerdictLabel];let verdictClass, verdictTitle;if (heuristicScore >= 35 || (finalVerdictLabel !== 'legítimo' && bestScore > 0.6)) {verdictClass = 'alert-red';verdictTitle = `[ALERTA: ${finalVerdictLabel.toUpperCase()} (${scorePercent}%)]`;} else if (finalVerdictLabel !== 'legítimo') {verdictClass = 'alert-orange';verdictTitle = `[SOSPECHOSO: ${finalVerdictLabel.toUpperCase()} (${scorePercent}%)]`;} else {verdictClass = 'alert-green';verdictTitle = `[LEGÍTIMO (${scorePercent}%)]`;}verdictBox.className = 'verdict-box';verdictBox.classList.add(verdictClass);typewriterEffect(verdictText, `${verdictTitle}\n> ${explanation}`);renderAdvice(finalVerdictLabel);saveToHistory(originalText, `${verdictTitle}\n> ${explanation}`, finalVerdictLabel);}function renderAdvice(threat) {adviceBox.innerHTML = '';const adviceList = threatAdvice[threat];if (adviceList && adviceList.length > 0) {const title = document.createElement('h3');title.textContent = 'Protocolo de Actuación Recomendado:';const list = document.createElement('ul');adviceList.forEach(tip => {const item = document.createElement('li');item.textContent = tip;list.appendChild(item);});adviceBox.appendChild(title);adviceBox.appendChild(list);}}function renderNer(originalText, entities) {let highlightedText = originalText;entities.sort((a, b) => b.start - a.start);entities.forEach(entity => {if (['URL', 'PER', 'LOC', 'ORG'].includes(entity.entity_group)) {const tag = `<span class="ner-text-highlight" title="Entidad: ${entity.entity_group}">${entity.word}</span>`;highlightedText = highlightedText.substring(0, entity.start) + tag + highlightedText.substring(entity.end);}});nerText.innerHTML = highlightedText.replace(/\n/g, '<br>');}function typewriterEffect(element, text) {element.innerHTML = "";let i = 0;const speed = 10;function type() {if (i < text.length) {element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);i++;setTimeout(type, speed);}}type();}function saveToHistory(text, verdict, label) {const history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];const newEntry = {id: Date.now(),date: new Date().toLocaleString('es-ES'),text: text,verdict: verdict,label: label};history.unshift(newEntry);localStorage.setItem('escudoDigitalHistory', JSON.stringify(history));renderHistory();}function loadHistory() {renderHistory();}function deleteFromHistory(id) {let history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];history = history.filter(entry => entry.id !== id);localStorage.setItem('escudoDigitalHistory', JSON.stringify(history));renderHistory();}function renderHistory() {const history = JSON.parse(localStorage.getItem('escudoDigitalHistory')) || [];historyList.innerHTML = '';if (history.length === 0) {historyList.innerHTML = '<p>No hay análisis guardados.</p>';return;}history.forEach(entry => {const item = document.createElement('div');item.className = 'history-item';item.innerHTML = `<div class="history-item-date">${entry.date}</div><p class="history-item-preview">${entry.text}</p><button class="delete-btn" title="Eliminar entrada"><svg viewBox="0 0 448 512" fill="currentColor" width="16" height="16"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg></button>`;item.addEventListener('click', () => {inputText.value = entry.text;verdictBox.className = 'verdict-box';typewriterEffect(verdictText, entry.verdict);renderAdvice(entry.label);renderNer(entry.text, []);resultsContainer.classList.remove('hidden');historyModal.classList.add('hidden');});const deleteBtn = item.querySelector('.delete-btn');deleteBtn.addEventListener('click', (event) => {event.stopPropagation();deleteFromHistory(entry.id);});historyList.appendChild(item);});}historyBtn.addEventListener('click', () => historyModal.classList.remove('hidden'));closeModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));window.addEventListener('click', (event) => {if (event.target === historyModal) {historyModal.classList.add('hidden');}});copyBtn.addEventListener('click', () => {inputText.select();document.execCommand('copy');status.textContent = '> OUTPUT BUFFER COPIED TO CLIPBOARD.';});clearBtn.addEventListener('click', () => {inputText.value = '';resultsContainer.classList.add('hidden');status.textContent = '> OUTPUT BUFFER CLEARED. AWAITING INPUT.';});const canvas = document.getElementById('matrix-background');const ctx = canvas.getContext('2d');let w = canvas.width = window.innerWidth;let h = canvas.height = window.innerHeight;let cols = Math.floor(w / 20) + 1;let ypos = Array(cols).fill(0);ctx.fillStyle = '#000';ctx.fillRect(0, 0, w, h);function matrix() {ctx.fillStyle = 'rgba(0,0,0,.05)';ctx.fillRect(0, 0, w, h);ctx.fillStyle = 'rgba(240, 240, 240, 0.9)';ctx.font = '15pt ' + getComputedStyle(document.body).fontFamily;ypos.forEach((y, ind) => {const text = String.fromCharCode(Math.random() * 128);const x = ind * 20;ctx.fillText(text, x, y);if (y > 100 + Math.random() * 10000) {ypos[ind] = 0;} else {ypos[ind] = y + 20;}});}setInterval(matrix, 50);window.addEventListener('resize', () => {w = canvas.width = window.innerWidth;h = canvas.height = window.innerHeight;cols = Math.floor(w / 20) + 1;ypos = Array(cols).fill(0);});});
