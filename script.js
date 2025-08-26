@@ -90,13 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Diccionario de palabras peligrosas ampliado
     const threatKeywords = {
+        // Urgencia y escasez
         'URGENTE': 15, 'inmediato': 15, 'ahora mismo': 15, 'última oportunidad': 15, 'dispone de 24 horas': 15, '12 horas': 15, 'tiempo limitado': 10,
+        // Bancos y pagos
         'cuenta bancaria': 20, 'datos bancarios': 20, 'transferencia': 15, 'IBAN': 20, 'tarjeta de crédito': 15, 'pago': 10,
+        // Credenciales y seguridad
         'contraseña': 15, 'credenciales': 15, 'verificar tu cuenta': 20, 'actividad sospechosa': 15, 'cuenta suspendida': 15,
+        // Aislamiento y autoridad
         'no puedo atender llamadas': 25, 'móvil apagado': 25, 'solo por email': 20, 'directora financiera': 10,
+        // Premios y ofertas
         'ha ganado un premio': 20, 'lotería': 20, 'herencia': 20, 'oferta de trabajo': 10,
+        // Enlaces y acciones
         'haga clic': 10, 'en el siguiente enlace': 10,
-        'paquete': 15, 'entrega': 15, 'envío': 15, 'tasas de aduana': 25, 'no ha podido ser entregado': 20
+        // Paquetería
+        'paquete': 15, 'entrega': 15, 'envío': 15, 'tasas de aduana': 25, 'no ha podido ser entregado': 20,
+        // **NUEVO: Soporte Técnico**
+        'soporte técnico': 25, 'virus detectado': 30, 'troyano': 30, 'software espía': 30, 'licencia ha sido suspendida': 25, 'llame inmediatamente': 20, 'microsoft': 10, 'windows': 10
     };
 
     // --- Inicialización del Kernel de IA ---
